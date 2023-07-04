@@ -2,8 +2,10 @@
 ----------
 
 쿠버네티스 1.23.~ 버전이후부터 Containerd 1.6버전 이하의 버전은 Container runtime으로 인식을 못한다.
-<br>
+<br><br>
 그러므로 1.6 버전이상의 containerd를 설치해야한다.
+<br><br>
+아래의 코드는 자동화코드이며 리눅스(데비안/우분투)에서 동작한다.
 
 
 	apt update  
