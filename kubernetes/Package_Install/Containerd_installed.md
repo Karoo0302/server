@@ -8,6 +8,7 @@
 아래의 코드는 자동화코드이며 리눅스(데비안/우분투)에서 동작한다.
 
 
+### 자동화 코드
 	apt update  
 
 	apt-get install -y apt-transport-https ca-certificates curl software-properties-common gnupg2 nfs-common  
