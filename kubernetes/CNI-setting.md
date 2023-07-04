@@ -5,4 +5,22 @@
 ### CNI 바로설치
 	kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 ### CNI yaml 파일 다운
-	
+	wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+<br>
+### 노드끼리 통신시 특정 IP 대역으로 통신하기
+<br>
+쿠버네티스 노드의 특정 IP 대역으로 통신하게끔 지정하기 위해선 CNI의 셋팅을 수정한 후 배포해야한다.
+<br>
+kube-flannel.yml 파일에 containers/args 영역에 --iface-regex=[netmask] 를 추가해준다
+
+	containers:
+	- name: kube-flannel
+	  image: docker.io/flannel/flannel:v0.22.0
+	  command:
+	  - /opt/bin/flanneld
+	  args:
+	  - --ip-masq
+	  - --kube-subnet-mgr\
+	  - --iface-regex=10\.10\.10\.0
+
