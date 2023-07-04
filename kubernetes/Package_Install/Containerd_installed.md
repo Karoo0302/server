@@ -29,3 +29,9 @@
 	cd /root  
 
 	systemctl restart containerd
+
+<br>
+
+"sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' config.toml" 부분은
+<br>
+SystemdCgroup을 true 로 바꾸어서 쿠버네티스에서 인식하여 사용할 수 있다.
