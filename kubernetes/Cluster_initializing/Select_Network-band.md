@@ -4,10 +4,11 @@
 <br>
 쿠버네티스의 노드의 IP를 노출할 때 IP를 지정할 수 있다.
 <br>
-* 폴더진입
-   vim /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+* 폴더진입<br>
+	vim /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 <br>
 해당폴더의 가장 하단의 --node-ip [원하는 IP] 를 추가한다.
+<br>
 
 	# Note: This dropin only works with kubeadm and kubelet v1.11+
 	[Service]
