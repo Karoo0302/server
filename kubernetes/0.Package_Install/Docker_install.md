@@ -11,6 +11,7 @@
 	apt install docker-ce
    
 Cgroup 변경하기
+
 	cat <<EOF | tee /etc/docker/daemon.json
 	{
 	"exec-opts": ["native.cgroupdriver=systemd"],
