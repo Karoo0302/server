@@ -102,3 +102,28 @@ etcd를 백업하고 복구 할 경우 etcd는 노드정보,클러스터 정보,
 	- etcd / kube-api-server / controlmanager 등 재시작
 	mv /root/etcd-restore/*.yaml /etc/kubernetes/manifests/
 
+위 명령어를 실행하면 기존에 있던 클러스터가 복구된다. 하지만 완벽한 복구를 위하여 coredns, kube-control-manager, scheduler pod들을 delete 해주면 재생성되면서 안전하게 복구가 완료된다.
+
+
+### 수동 인증서 rotation
+
+etcd를 복구 할때 etcd 자체는 복구가 되었지만 CA인증서의 경우 새클러스터의 인증서를 사용하여 메타데이터가 매핑이 안됌 이 경우 수동 인증서 rotation을 하여 인증서를 recreate 할 수 있음. 
+
+자동화 shell 코드
+
+	for namespace in $(kubectl get namespace -o jsonpath='{.items[*].metadata.name}'); do
+		for name in $(kubectl get deployments -n $namespace -o jsonpath='{.items[*].metadata.name}'); do
+			kubectl patch deployment -n ${namespace} ${name} -p '{"spec":{"template":{"metadata":{"annotations":{"ca-rotation": "1"}}}}}';
+		done
+		for name in $(kubectl get daemonset -n $namespace -o jsonpath='{.items[*].metadata.name}'); do
+			kubectl patch daemonset -n ${namespace} ${name} -p '{"spec":{"template":{"metadata":{"annotations":{"ca-rotation": "1"}}}}}';
+		done
+	done
+
+	base64_encoded_ca="$(base64 -w0 /etc/kubernetes/pki/ca.crt)"
+
+	kubectl get cm/cluster-info --namespace kube-public -o yaml | \
+		/bin/sed "s/\(certificate-authority-data:\).*/\1 ${base64_encoded_ca}/" | \
+		kubectl apply -f -
+
+마찬가지로 위 쉘을 실행시키고 etcd , kube-api-server , controlmanager pod를 재시작 해주어야 한다.
