@@ -24,9 +24,16 @@ Role에는 rule이 포함된다. 룰을 롤이 가지는 규칙을 명시해준�
 
 ### 권한 생성 및 적용하기
 
+Cluster Role 만들기
+
+Cluster Role은 클러스터 자체에 적용되는 롤이기 때문에 namespace를 지정하지 않아도 된다.
+우선 serviceaccount를 생성해준다.
+
+	kubectl craete serviceaccount test --namespace default
+
 #### token 생성하기
 
-kubernetes 1.20~ 버전 이후 부터는 보안이슈로 인하여 네임스페이스를 만들 때 토큰이 자동생성되지 않는다.
+kubernetes 1.20~ 버전 이후 부터는 보안이슈로 인하여 serviceaccount를 만들 때 토큰이 자동생성되지 않는다.
 
 * token.yaml
 
@@ -34,12 +41,53 @@ kubernetes 1.20~ 버전 이후 부터는 보안이슈로 인하여 네임스페�
 apiVersion: v1
 kind: Secret
 metadata:
-  name: monitoring-token
+  name: test-token
   annotations:
-    kubernetes.io/service-account.name: monitoring-bot
+    kubernetes.io/service-account.name: test-bot
 type: kubernetes.io/service-account-token
 ```
 
 	kubectl apply -f token.yaml
 	
-	kubectl describe secret monitoring-token
+	kubectl describe secret test-token
+
+위의 token을 복사해준다.
+
+	export TEST_TOKEN="붙여넣기"
+	
+	kubectl config set-credentials --token=$TEST_TOKEN test
+	
+	kubectl config set-context --cluster=kubernetes --user=test test
+	
+	kubectl config get-contexts
+	
+* ClusterRole & Role binding .yaml
+
+```
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: test-clusterrole
+rules:
+- apiGroups: ["","metrics.k8s.io"]
+  resources: ["pods","nodes"]
+  verbs: ["get", "list", "top"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: test-rolebinding
+subjects:
+- kind: ServiceAccount
+  name: test
+  namespace: default
+  apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: test-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+```
+
+위와 같이 만들어주면 Cluster role이 생성된다.
+
+.kube/config 안에 context 들이 구성되어 있으므로 해당내용을 확인하면 된다.
