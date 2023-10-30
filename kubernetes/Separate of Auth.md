@@ -30,6 +30,7 @@ kubernetes 1.20~ 버전 이후 부터는 보안이슈로 인하여 네임스페�
 
 * token.yaml
 
+```
 	apiVersion: v1
 	kind: Secret
 	metadata:
@@ -37,7 +38,7 @@ kubernetes 1.20~ 버전 이후 부터는 보안이슈로 인하여 네임스페�
 	  annotations:
 	    kubernetes.io/service-account.name: monitoring-bot
 	type: kubernetes.io/service-account-token
-
+```
 
 	kubectl apply -f token.yaml
 	
