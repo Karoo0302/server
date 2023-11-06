@@ -52,67 +52,69 @@ data:
 
 - cronjob.yaml
 
-	apiVersion: batch/v1
-	kind: CronJob
-	metadata:
-	  name: [namespace]-ecr-cronjob
-	  namespace: [namespace]
+```
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: [namespace]-ecr-cronjob
+  namespace: [namespace]
+spec:
+  schedule: "0 */8 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
 	spec:
-	  schedule: "0 */8 * * *"
-	  concurrencyPolicy: Forbid
-	  successfulJobsHistoryLimit: 1
-	  failedJobsHistoryLimit: 1
-	  jobTemplate:
-	    spec:
-	    backoffLimit: 4
-	    template:
-	      spec:
-	        serviceAccountName: default
-	        terminationGracePeriodSeconds: 0
-	        restartPolicy: Never
-	        volumes:
-	        - name: shared-data
-	          emptyDir: {}
-	        containers:
-	        - name: aws-cli
-	          securityContext:
-	            allowPrivilegeEscalation: false
-	            runAsUser: 0
-	          imagePullPolicy: IfNotPresent
-	          image: lawdiansz/aws-cli:latest
-	          volumeMounts:
-	          - name: shared-data
-	            mountPath: /data
-	          envFrom:
-	          - secretRef:
-	            name: aws-configure-secret
-	          command:
-	          - "/bin/sh"
-	          - "-c"
-	          - |
-	            aws configure set aws_access_key_id "${ACCESS_KEY}"
-	            aws configure set aws_secret_access_key "${SECRET_ACCESS_KEY}"
-	            aws configure set region ap-northeast-2
-	            aws configure set output json
-	            aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 688312605767.dkr.ecr.ap-northeast-2.amazonaws.com
-                cp /root/.docker/config.json /data/config.json
-            - name: kubectl
-              securityContext:
-                allowPrivilegeEscalation: false
-                runAsUser: 0
-              imagePullPolicy: IfNotPresent
-              image: bitnami/kubectl
-              volumeMounts:
-              - name: shared-data
-                mountPath: /data
-              command:
-              - "/bin/sh"
-              - "-c"
-              - |
-                sleep 20
-                ls -l /data
-                kubectl delete secret -n [namespace] ecr
-                kubectl create secret generic ecr --from-file=.dockerconfigjson=/data/config.json --type=kubernetes.io/dockerconfigjson -n [namespace]
+	backoffLimit: 4
+	template:
+	  spec:
+		serviceAccountName: default
+		terminationGracePeriodSeconds: 0
+		restartPolicy: Never
+		volumes:
+		- name: shared-data
+		  emptyDir: {}
+		containers:
+		- name: aws-cli
+		  securityContext:
+			allowPrivilegeEscalation: false
+			runAsUser: 0
+		  imagePullPolicy: IfNotPresent
+		  image: lawdiansz/aws-cli:latest
+		  volumeMounts:
+		  - name: shared-data
+			mountPath: /data
+		  envFrom:
+		  - secretRef:
+			name: aws-configure-secret
+		  command:
+		  - "/bin/sh"
+		  - "-c"
+		  - |
+			aws configure set aws_access_key_id "${ACCESS_KEY}"
+			aws configure set aws_secret_access_key "${SECRET_ACCESS_KEY}"
+			aws configure set region ap-northeast-2
+			aws configure set output json
+			aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 688312605767.dkr.ecr.ap-northeast-2.amazonaws.com
+			cp /root/.docker/config.json /data/config.json
+		- name: kubectl
+		  securityContext:
+			allowPrivilegeEscalation: false
+			runAsUser: 0
+		  imagePullPolicy: IfNotPresent
+		  image: bitnami/kubectl
+		  volumeMounts:
+		  - name: shared-data
+			mountPath: /data
+		  command:
+		  - "/bin/sh"
+		  - "-c"
+		  - |
+			sleep 20
+			ls -l /data
+			kubectl delete secret -n [namespace] ecr
+			kubectl create secret generic ecr --from-file=.dockerconfigjson=/data/config.json --type=kubernetes.io/dockerconfigjson -n [namespace]
+```
 
 schedule: "0 */8 * * *"
 은 8시간마다 시도한다는 셋팅이다. 처음 셋팅할 경우 * * * * * 으로 최초 셋팅을 진행한 후 다시 바
