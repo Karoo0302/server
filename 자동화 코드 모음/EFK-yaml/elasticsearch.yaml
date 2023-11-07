@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+  namespace: logging
+  labels:
+    app: elasticsearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+      - name: elasticsearch
+        image: elasticsearch:7.8.0
+        env:
+        - name: discovery.type
+          value : "single-node"
+        - name: ES_JAVA_OPTS
+          value: -Xms2048m -Xmx2048m
+        ports:
+        - containerPort: 9200
+        - containerPort: 9300
+        volumeMounts:
+        - mountPath: /usr/share/elasticsearch/data
+          name: elasticsearchdata
+        - name: config
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          readOnly: true
+          subPath: elasticsearch.yml
+        - name : log-backup
+          mountPath: /usr/share/elasticsearch/backup
+      volumes:
+      - name: elasticsearchdata
+        persistentVolumeClaim:
+          claimName: elasticsearch-pv-claim
+      - name: config
+        configMap:
+          name: elasticsearch-master-config
+      - name: log-backup
+        hostPath:
+          path: /log-backup
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: elasticsearch
+  name: elasticsearch-in
+  namespace: logging
+spec:
+  ports:
+  - name: elasticsearch-rest
+    port: 9200
+    protocol: TCP
+  - name: elasticsearch-nodecom
+    port: 9300
+    protocol: TCP
+  selector:
+    app: elasticsearch
